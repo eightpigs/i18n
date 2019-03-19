@@ -6,7 +6,9 @@ import (
 )
 
 func main() {
-	locale, e := i18n.NewLocale("zh-CN", "")
+	// locale, e := i18n.NewLocale("zh-CN", "xxx/locales/zh-CN.yaml")
+	i18n.DefaultLocale = "zh-CN"
+	locale, e := i18n.New()
 	if e != nil {
 		panic(e)
 	}

@@ -29,8 +29,8 @@ import (
 )
 
 func main() {
-  // Load the instance from ./locales/zh-CN.yaml
-  locale, e := i18n.NewLocale("zh-CN", "")
+  // Create instances based on default locale
+  locale, e := i18n.New()
   if e != nil {
   	panic(e)
   }
@@ -46,6 +46,20 @@ func main() {
   msg = group.Get("too-short", "12345")
   fmt.Println(msg)
 }
+```
+
+Specify localization language
+
+```go
+locale, e := i18n.NewLocale("zh-CN", "xxx/locales/zh-CN.yaml")
+```
+
+Sets the global default localization language
+
+```go
+i18n.DefaultLocale = "zh-CN"
+// Create instances based on default locale
+i18n.New()
 ```
 
 ## Benchmark

@@ -23,8 +23,13 @@ type message map[interface{}]interface{}
 
 var (
 	instances     = make(map[string]*locale)
-	defaultLocale = "zh-CN"
+	DefaultLocale = "zh-CN"
 )
+
+// New will create or return existing localized instances.
+func New() (l *locale, e error) {
+	return NewLocale(DefaultLocale, "")
+}
 
 // NewLocale will create or return existing localized instances.
 func NewLocale(language string, path string) (l *locale, e error) {
@@ -40,7 +45,7 @@ func NewLocale(language string, path string) (l *locale, e error) {
 // Returns if an instance of the language already exists.
 func (l *locale) newInstance() error {
 	if len(l.language) == 0 {
-		l.language = defaultLocale
+		l.language = DefaultLocale
 	}
 
 	if len(l.path) == 0 {
