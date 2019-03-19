@@ -1,0 +1,5 @@
+user:
+  password:
+    error:
+      too-short: "密码太短: %s"
+      too-simple: 密码不符合规则
