@@ -7,6 +7,7 @@ A simple i18n library that uses yaml to define localization files.
 - Hierarchical model (Based on the Yaml)
 - Efficient access through grouping
 - Cache created instances
+- Cache the last used instance
 
 ## Usage
 
@@ -60,6 +61,17 @@ Sets the global default localization language
 i18n.DefaultLocale = "zh-CN"
 // Create instances based on default locale
 i18n.New()
+```
+
+Use the last localized configuration.
+
+```go
+// Use the last localized configuration.
+msg = i18n.Get("user.password.error.too-simple")
+fmt.Println(msg)
+
+group = i18n.Group("user.password.error")
+fmt.Println(group.Get("too-short", "112233"))
 ```
 
 ## Benchmark

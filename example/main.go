@@ -22,4 +22,11 @@ func main() {
 	// get messages within a group
 	msg = group.Get("too-short", "12345")
 	fmt.Println(msg)
+
+	// Use the last localized configuration.
+	msg = i18n.Get("user.password.error.too-simple")
+	fmt.Println(msg)
+
+	group = i18n.Group("user.password.error")
+	fmt.Println(group.Get("too-short", "112233"))
 }

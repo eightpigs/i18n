@@ -24,11 +24,16 @@ type message map[interface{}]interface{}
 var (
 	instances     = make(map[string]*locale)
 	DefaultLocale = "zh-CN"
+	// The last instance used.
+	lastInstance    *locale
+	noInstanceError = errors.New("Must create an instance at least once.")
 )
 
 // New will create or return existing localized instances.
 func New() (l *locale, e error) {
-	return NewLocale(DefaultLocale, "")
+	l, e = NewLocale(DefaultLocale, "")
+	lastInstance = l
+	return
 }
 
 // NewLocale will create or return existing localized instances.
@@ -38,6 +43,7 @@ func NewLocale(language string, path string) (l *locale, e error) {
 		path:     path,
 	}
 	e = l.newInstance()
+	lastInstance = l
 	return
 }
 
@@ -109,4 +115,21 @@ func parse(val interface{}, args []interface{}) string {
 		return fmt.Sprintf(val.(string), args...)
 	}
 	return val.(string)
+}
+
+// Get will return a message based on the last used instance.
+func Get(flag string, args ...interface{}) interface{} {
+	if lastInstance != nil {
+		return lastInstance.Get(flag, args...)
+	}
+	panic(noInstanceError)
+}
+
+// Group returns a group based on the last used instance.
+func Group(flag string) group {
+	if lastInstance != nil {
+		msg := lastInstance.Get(flag).(message)
+		return group{message: &msg}
+	}
+	panic(noInstanceError)
 }
