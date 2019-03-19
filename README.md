@@ -24,7 +24,7 @@ user:
 package main
 
 import (
-	"eightpigs.io/i18n"
+	"github.com/eightpigs/i18n"
 	"fmt"
 )
 
