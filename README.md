@@ -25,8 +25,8 @@ user:
 package main
 
 import (
-	"github.com/eightpigs/i18n"
-	"fmt"
+  "github.com/eightpigs/i18n"
+  "fmt"
 )
 
 func main() {
