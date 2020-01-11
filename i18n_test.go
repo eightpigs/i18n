@@ -13,7 +13,7 @@ func Test_Get(t *testing.T) {
 	msg := g.Get("too-short", "1234a")
 	expected := "密码太短: 1234a"
 	if msg != expected {
-		t.Errorf("i18n format error: %s != %s", msg, expected)
+		t.Errorf("i18n parse error: %s != %s", msg, expected)
 	} else {
 		t.Logf("%#v\n", msg)
 	}

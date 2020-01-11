@@ -21,80 +21,77 @@ type group struct {
 
 type message map[interface{}]interface{}
 
+// Shrink default threshold size.
+const threshold = 3
+
 var (
-	instances     = make(map[string]*locale)
+	// cached instances.
+	instances     [threshold]*locale
 	DefaultLocale = "zh-CN"
-	// The last instance used.
-	lastInstance    *locale
-	noInstanceError = errors.New("Must create an instance at least once.")
+	lastUsed      = -1
+	errNoInstance = errors.New("must create an instance at least once")
 )
 
-// New will create or return existing localized instances.
+// New func will create or return existing localize instances.
 func New() (l *locale, e error) {
 	l, e = NewLocale(DefaultLocale, "")
-	lastInstance = l
 	return
 }
 
-// NewLocale will create or return existing localized instances.
+// NewLocale will create or return existing localize instances.
 func NewLocale(language string, path string) (l *locale, e error) {
-	l = &locale{
-		language: language,
-		path:     path,
+	if len(language) == 0 {
+		language = DefaultLocale
 	}
-	e = l.newInstance()
-	lastInstance = l
-	return
-}
-
-// Create a localized instance.
-// Returns if an instance of the language already exists.
-func (l *locale) newInstance() error {
-	if len(l.language) == 0 {
-		l.language = DefaultLocale
+	if len(path) == 0 {
+		path = "locales/" + language + ".yaml"
 	}
-
-	if len(l.path) == 0 {
-		l.path = "locales/" + l.language + ".yaml"
-	}
-
-	// Returns an existing instance.
-	if v, ok := instances[l.language]; ok {
-		l.message = v.message
+	if instance, index := findInstance(language); instance != nil && index != -1 {
+		l = instance
+		lastUsed = index
 	} else {
-		// Read yaml and create a new instance.
-		bytes, e := ioutil.ReadFile(l.path)
-		if e != nil {
-			return errors.New("The locale file was not found: " + l.path)
+		// read yaml and create a new instance.
+		bytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			fmt.Print(err)
+			e = errors.New("The locale file was not found: " + path)
+		} else {
+			l = &locale{
+				language: language,
+				path:     path,
+				message:  &message{},
+			}
+			e = yaml.Unmarshal(bytes, l.message)
+			if e == nil {
+				cache(l)
+			}
 		}
-		l.message = &message{}
-		e = yaml.Unmarshal(bytes, l.message)
-		if e != nil {
-			return e
-		}
-		instances[l.language] = l
 	}
-	return nil
+	return
 }
 
 // Get will return localized messages.
 // Return a message instance if it is not a specific message, otherwise return the formatted string of the message.
 func (l *locale) Get(flag string, args ...interface{}) interface{} {
 	flags := strings.Split(flag, ".")
-	r := (*l.message)[flags[0]]
+	val := (*l.message)[flags[0]]
 	for i := 1; i < len(flags); i++ {
-		r = r.(message)[flags[i]]
+		val = val.(message)[flags[i]]
 	}
-	if reflect.TypeOf(r).Name() != "string" {
-		return r
+	if val == nil {
+		return ""
 	}
-	return parse(r, args)
+	if reflect.TypeOf(val).Name() != "string" {
+		return val
+	}
+
+	return parse(val, args)
 }
 
 // Group will return a message grouping for fast and efficient access to intra-group messages.
-func (l *locale) Group(flag string) group {
+func (l *locale) Group(flag string) *group {
 	msg := l.Get(flag).(message)
-	return group{message: &msg}
+	return &group{message: &msg}
 }
 
 // Get will return a normal or formatted message string.
@@ -104,6 +101,23 @@ func (g *group) Get(flag string, args ...interface{}) string {
 		return parse(v, args)
 	}
 	return ""
+}
+
+// Get will return a message based on the last used instance.
+func Get(flag string, args ...interface{}) (interface{}, error) {
+	if lastUsed != -1 {
+		return instances[lastUsed].Get(flag, args...), nil
+	}
+	return nil, errNoInstance
+}
+
+// Group returns a group based on the last used instance.
+func Group(flag string) (*group, error) {
+	if lastUsed != -1 {
+		msg := instances[lastUsed].Get(flag).(message)
+		return &group{message: &msg}, nil
+	}
+	return nil, errNoInstance
 }
 
 // Format the message or return the message text directly.
@@ -117,19 +131,30 @@ func parse(val interface{}, args []interface{}) string {
 	return val.(string)
 }
 
-// Get will return a message based on the last used instance.
-func Get(flag string, args ...interface{}) interface{} {
-	if lastInstance != nil {
-		return lastInstance.Get(flag, args...)
+func findInstance(language string) (*locale, int) {
+	for i, v := range instances {
+		if v != nil && v.language == language {
+			return v, i
+		}
 	}
-	panic(noInstanceError)
+	return nil, -1
 }
 
-// Group returns a group based on the last used instance.
-func Group(flag string) group {
-	if lastInstance != nil {
-		msg := lastInstance.Get(flag).(message)
-		return group{message: &msg}
+func cache(l *locale) {
+	cached := false
+	for i := range instances {
+		if instances[i] == nil {
+			instances[i] = l
+			cached = true
+			lastUsed = i
+		}
 	}
-	panic(noInstanceError)
+	if !cached {
+		end := threshold - 1
+		for i := 0; i < end; i++ {
+			instances[i] = instances[i+1]
+		}
+		instances[end] = l
+		lastUsed = end
+	}
 }

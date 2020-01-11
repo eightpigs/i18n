@@ -24,9 +24,16 @@ func main() {
 	fmt.Println(msg)
 
 	// Use the last localized configuration.
-	msg = i18n.Get("user.password.error.too-simple")
+	msg, e = i18n.Get("user.password.error.too-simple")
+	if e != nil {
+		panic(e)
+	}
+
 	fmt.Println(msg)
 
-	group = i18n.Group("user.password.error")
+	group, e = i18n.Group("user.password.error")
+	if e != nil {
+		panic(e)
+	}
 	fmt.Println(group.Get("too-short", "112233"))
 }
